@@ -9,9 +9,30 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
+    - name: Set up job
+      run: echo "Starting CI pipeline"
+
     - name: Checkout code
       uses: actions/checkout@v3
+
+    - name: Initialize containers
+      run: echo "Containers initialized"
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -21,10 +42,13 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-        pip install flake8 nose
+        pip install flake8 nose coverage
 
-    - name: Lint with flake8
+    - name: Lint code with flake8
       run: flake8 service
 
-    - name: Run unit tests
-      run: nosetests
+    - name: Run unit tests with nosetests
+      run: nosetests --with-coverage --verbosity=2
+
+    - name: Complete job
+      run: echo "CI pipeline completed successfully"
